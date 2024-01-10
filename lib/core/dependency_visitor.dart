@@ -51,20 +51,39 @@ class DependencyVisitor {
     final dependencies = <String>{};
     final contents = File(filePath).readAsStringSync();
 
-    final classDependencies = _getClassDependency(contents);
-    final dependencyPaths = _resolveUri(contents, classDependencies);
+    final imports = _getImportLines(contents);
+    // Logger.i('File $filePath ---  $imports');
 
-    dependencies.addAll(dependencyPaths);
+    final importsList = [...imports[_relativeImportsConst]!, ...imports[_absoluteImportsConst]!];
+
+    // Logger.i('File $filePath ---  $importsList');
+
+    dependencies.add(filePath);
 
     /// Find out transitive dependencies
-    for (final dependencyPath in dependencyPaths) {
+    for (final import in importsList) {
       /// There can be a cyclic dependency, so to make sure we are not visiting the same node multiple times
-      if (_hasNotVisited(dependencyPath)) {
-        _markVisited(dependencyPath);
-        final transitiveDependencies = _getDependenciesPath(dependencyPath);
+      if (_hasNotVisited(import)) {
+        _markVisited(import);
+        final transitiveDependencies = _getDependenciesPath(import);
         dependencies.addAll(transitiveDependencies);
       }
     }
+
+    // final classDependencies = _getClassDependency(contents);
+    // final dependencyPaths = _resolveUri(contents, classDependencies);
+
+    // dependencies.addAll(dependencyPaths);
+
+    // /// Find out transitive dependencies
+    // for (final dependencyPath in dependencyPaths) {
+    //   /// There can be a cyclic dependency, so to make sure we are not visiting the same node multiple times
+    //   if (_hasNotVisited(dependencyPath)) {
+    //     _markVisited(dependencyPath);
+    //     final transitiveDependencies = _getDependenciesPath(dependencyPath);
+    //     dependencies.addAll(transitiveDependencies);
+    //   }
+    // }
 
     return dependencies;
   }
@@ -75,9 +94,13 @@ class DependencyVisitor {
 
     final lines = dartSource.split('\n');
 
+    //print(lines);
+
     for (final line in lines) {
       final relativeMatch = relativeImportRegex.firstMatch(line);
       final packageMatch = packageImportRegex.firstMatch(line);
+
+      //print('line $line -- [R: ${relativeMatch != null}, P: ${packageMatch != null}]');
 
       if (relativeMatch != null) {
         final importedPath = relativeMatch.group(1);
@@ -121,47 +144,47 @@ class DependencyVisitor {
     return paths;
   }
 
-  Set<String> _resolveUri(String contents, Set<String> dependencies) {
-    final importPaths = convertImportStatementsToAbsolutePaths(contents);
-    final paths = <String>{};
+  // Set<String> _resolveUri(String contents, Set<String> dependencies) {
+  //   final importPaths = convertImportStatementsToAbsolutePaths(contents);
+  //   final paths = <String>{};
 
-    for (final dependencyPath in importPaths) {
-      final dependencyContents = File(dependencyPath).readAsStringSync();
+  //   for (final dependencyPath in importPaths) {
+  //     final dependencyContents = File(dependencyPath).readAsStringSync();
 
-      for (final dependencyClass in dependencies) {
-        final classNameMatch = classNameRegex.firstMatch(dependencyContents);
-        final className = classNameMatch?.group(1);
-        if (className == dependencyClass) {
-          paths.add(dependencyPath);
-        }
-      }
-    }
+  //     for (final dependencyClass in dependencies) {
+  //       final classNameMatch = classNameRegex.firstMatch(dependencyContents);
+  //       final className = classNameMatch?.group(1);
+  //       if (className == dependencyClass) {
+  //         paths.add(dependencyPath);
+  //       }
+  //     }
+  //   }
 
-    return paths;
-  }
+  //   return paths;
+  // }
 
-  Set<String> _getClassDependency(String contents) {
-    final dependencies = <String>{};
+  // Set<String> _getClassDependency(String contents) {
+  //   final dependencies = <String>{};
 
-    /// find matches
-    final extendsMatch = extendsRegex.firstMatch(contents);
-    final implementsMatch = implementsRegex.firstMatch(contents);
-    final withMatch = withRegex.firstMatch(contents);
+  //   /// find matches
+  //   final extendsMatch = extendsRegex.firstMatch(contents);
+  //   final implementsMatch = implementsRegex.firstMatch(contents);
+  //   final withMatch = withRegex.firstMatch(contents);
 
-    if (extendsMatch != null) {
-      dependencies.add(extendsMatch.group(1) ?? '');
-    }
+  //   if (extendsMatch != null) {
+  //     dependencies.add(extendsMatch.group(1) ?? '');
+  //   }
 
-    if (implementsMatch != null) {
-      final interfaces = implementsMatch.group(1)?.split(',') ?? const [];
-      dependencies.addAll(interfaces.map((i) => i.trim()));
-    }
+  //   if (implementsMatch != null) {
+  //     final interfaces = implementsMatch.group(1)?.split(',') ?? const [];
+  //     dependencies.addAll(interfaces.map((i) => i.trim()));
+  //   }
 
-    if (withMatch != null) {
-      final mixins = withMatch.group(1)?.split(',') ?? const [];
-      dependencies.addAll(mixins.map((m) => m.trim()));
-    }
+  //   if (withMatch != null) {
+  //     final mixins = withMatch.group(1)?.split(',') ?? const [];
+  //     dependencies.addAll(mixins.map((m) => m.trim()));
+  //   }
 
-    return dependencies;
-  }
+  //   return dependencies;
+  // }
 }
