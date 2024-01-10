@@ -301,8 +301,8 @@ class CachedBuildRunner {
     /// where ... contains the list of files that needs generation
     Logger.v('Running build_runner build...', showPrefix: false);
 
-    // final filterList = _getBuildFilterList(files);
-    // Logger.v(filterList, showPrefix: false);
+    final filterList = _getBuildFilterList(files);
+    Logger.v(filterList, showPrefix: false);
 
     /// TODO: let's check how we can use the build_runner package and include in this project
     /// instead of relying on the flutter pub run command
@@ -316,7 +316,7 @@ class CachedBuildRunner {
         'build',
         '--build-filter',
         _getBuildFilterList(files),
-        '--delete-conflicting-outputs',
+        //  '--delete-conflicting-outputs',
       ],
       workingDirectory: Utils.projectDirectory,
     );
